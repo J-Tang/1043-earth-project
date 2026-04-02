@@ -1,0 +1,714 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useState, useRef, useEffect } from 'react'
+import { ArrowLeft, Search, X, Clock, TrendingUp, Filter, MapPin, ShoppingBag, Star, Calendar, Users, ChevronRight } from 'lucide-react'
+
+// 热门搜索数据
+const popularSearches = [
+  { id: 1, text: '冥想', count: 1243, type: 'tag' },
+  { id: 2, text: '能量疗愈', count: 892, type: 'service' },
+  { id: 3, text: '水晶净化', count: 765, type: 'product' },
+  { id: 4, text: '觉醒工作坊', count: 543, type: 'course' },
+  { id: 5, text: '满月仪式', count: 432, type: 'event' },
+  { id: 6, text: '心灵成长', count: 321, type: 'tag' },
+]
+
+// 搜索历史数据
+const searchHistory = [
+  { id: 1, text: '行星能量中心', time: '今天 10:30', type: 'brand' },
+  { id: 2, text: '能量水晶套装', time: '昨天 15:20', type: 'product' },
+  { id: 3, text: '冥想坐垫', time: '前天 09:45', type: 'product' },
+  { id: 4, text: '觉醒之路课程', time: '3天前 14:10', type: 'course' },
+]
+
+// 搜索建议数据
+const searchSuggestions = [
+  { id: 1, text: '冥想场牌', category: '场牌' },
+  { id: 2, text: '能量疗愈服务', category: '服务' },
+  { id: 3, text: '水晶产品', category: '商品' },
+  { id: 4, text: '觉醒课程', category: '课程' },
+  { id: 5, text: '集体活动', category: '活动' },
+  { id: 6, text: '一对一咨询', category: '服务' },
+]
+
+// 模拟搜索结果
+const mockSearchResults = {
+  brands: [
+    {
+      id: 1,
+      name: '行星能量中心',
+      slogan: '连接地球能量网格，提供集体冥想与能量疗愈服务',
+      type: '场牌',
+      matchScore: 95,
+      location: '北京',
+      tags: ['冥想', '能量', '集体'],
+      imageColor: 'from-purple-400 to-purple-600'
+    },
+    {
+      id: 2,
+      name: '心灵疗愈空间',
+      slogan: '专业心理咨询与能量疗愈结合，提供一对一指导',
+      type: '场牌',
+      matchScore: 87,
+      location: '上海',
+      tags: ['疗愈', '心灵', '一对一'],
+      imageColor: 'from-blue-400 to-blue-600'
+    }
+  ],
+  products: [
+    {
+      id: 1,
+      name: '能量水晶套装',
+      description: '精选天然水晶，经过能量净化与祝福',
+      type: '商品',
+      matchScore: 92,
+      price: 299,
+      originalPrice: 399,
+      tags: ['水晶', '能量', '工具'],
+      imageColor: 'from-green-400 to-green-600'
+    },
+    {
+      id: 2,
+      name: '冥想坐垫',
+      description: '人体工学设计，帮助深度冥想',
+      type: '商品',
+      matchScore: 85,
+      price: 189,
+      originalPrice: 249,
+      tags: ['冥想', '舒适', '工具'],
+      imageColor: 'from-orange-400 to-orange-600'
+    }
+  ],
+  courses: [
+    {
+      id: 1,
+      name: '觉醒之路工作坊',
+      description: '7天内在觉醒课程，引导自我认知与能量提升',
+      type: '课程',
+      matchScore: 88,
+      price: 888,
+      duration: '7天',
+      tags: ['觉醒', '课程', '成长'],
+      imageColor: 'from-pink-400 to-pink-600'
+    }
+  ],
+  events: [
+    {
+      id: 1,
+      name: '满月疗愈仪式',
+      description: '满月能量的集体疗愈与净化活动',
+      type: '活动',
+      matchScore: 79,
+      date: '2026-04-12',
+      participants: 42,
+      tags: ['满月', '集体', '仪式'],
+      imageColor: 'from-indigo-400 to-indigo-600'
+    }
+  ]
+}
+
+// 筛选选项
+const filterOptions = {
+  types: ['全部', '场牌', '商品', '课程', '活动'],
+  locations: ['全部', '北京', '上海', '广州', '深圳', '杭州', '成都'],
+  priceRanges: ['全部', '0-199', '200-499', '500-999', '1000+'],
+  sortOptions: ['匹配度', '价格低到高', '价格高到低', '评分', '最新']
+}
+
+export default function SearchPage() {
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const [showResults, setShowResults] = useState(false)
+  const [activeFilter, setActiveFilter] = useState('全部')
+  const [selectedType, setSelectedType] = useState('全部')
+  const [selectedLocation, setSelectedLocation] = useState('全部')
+  const [selectedPrice, setSelectedPrice] = useState('全部')
+  const [selectedSort, setSelectedSort] = useState('匹配度')
+  const [showFilters, setShowFilters] = useState(false)
+  
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // 聚焦搜索框
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [])
+
+  const handleSearch = (query = searchQuery) => {
+    if (!query.trim()) return
+    
+    setIsSearching(true)
+    setShowResults(true)
+    
+    // 模拟搜索延迟
+    setTimeout(() => {
+      setIsSearching(false)
+    }, 800)
+  }
+
+  const handleQuickSearch = (text: string) => {
+    setSearchQuery(text)
+    handleSearch(text)
+  }
+
+  const clearSearch = () => {
+    setSearchQuery('')
+    setShowResults(false)
+    if (searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }
+
+  const clearHistory = () => {
+    // 这里应该调用API清除历史
+    console.log('清除搜索历史')
+  }
+
+  const getResultCount = () => {
+    return (
+      mockSearchResults.brands.length +
+      mockSearchResults.products.length +
+      mockSearchResults.courses.length +
+      mockSearchResults.events.length
+    )
+  }
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case '场牌':
+        return <MapPin size={16} className="text-blue-500" />
+      case '商品':
+        return <ShoppingBag size={16} className="text-green-500" />
+      case '课程':
+        return <Star size={16} className="text-yellow-500" />
+      case '活动':
+        return <Calendar size={16} className="text-orange-500" />
+      default:
+        return <Search size={16} />
+    }
+  }
+
+  return (
+    <div className="min-h-screen">
+      <main className="content-area">
+        {/* 顶部搜索栏 */}
+        <header className="sticky top-0 z-20 bg-surface/95 backdrop-blur-sm border-b border-surface-variant">
+          <div className="p-4">
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => router.back()}
+                className="p-2 rounded-full hover:bg-surface-variant transition-colors"
+              >
+                <ArrowLeft size={24} className="text-on-surface" />
+              </button>
+              
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-on-surface-variant" size={20} />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="搜索场牌、商品、课程、活动..."
+                  className="w-full pl-12 pr-10 py-3 bg-surface border border-surface-variant rounded-xl text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-surface-variant rounded-full transition-colors"
+                  >
+                    <X size={18} className="text-on-surface-variant" />
+                  </button>
+                )}
+              </div>
+
+              <button
+                onClick={() => handleSearch()}
+                className="px-4 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-variant transition-colors whitespace-nowrap"
+              >
+                搜索
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* 搜索状态 */}
+        {isSearching && (
+          <div className="p-8 text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+            <p className="text-on-surface">正在搜索中...</p>
+            <p className="text-sm text-on-surface-variant mt-1">正在为您查找最佳匹配结果</p>
+          </div>
+        )}
+
+        {/* 搜索结果 */}
+        {showResults && !isSearching && (
+          <div className="px-4 py-6">
+            {/* 结果统计和筛选 */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-on-surface">搜索结果</h2>
+                <p className="text-sm text-on-surface-variant">
+                  找到 {getResultCount()} 个相关结果
+                  {searchQuery && ` 关于 "${searchQuery}"`}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-3 py-2 bg-surface-variant text-on-surface rounded-lg hover:bg-surface-variant/80 transition-colors"
+              >
+                <Filter size={16} />
+                筛选
+              </button>
+            </div>
+
+            {/* 筛选面板 */}
+            {showFilters && (
+              <div className="bg-surface rounded-2xl p-4 border border-surface-variant mb-6 space-y-4">
+                <div>
+                  <div className="text-sm font-medium text-on-surface mb-2">类型</div>
+                  <div className="flex flex-wrap gap-2">
+                    {filterOptions.types.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setSelectedType(type)}
+                        className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                          selectedType === type
+                            ? 'bg-primary text-white'
+                            : 'bg-surface-variant text-on-surface-variant hover:bg-surface-variant/80'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium text-on-surface mb-2">位置</div>
+                  <div className="flex flex-wrap gap-2">
+                    {filterOptions.locations.map((location) => (
+                      <button
+                        key={location}
+                        onClick={() => setSelectedLocation(location)}
+                        className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                          selectedLocation === location
+                            ? 'bg-primary text-white'
+                            : 'bg-surface-variant text-on-surface-variant hover:bg-surface-variant/80'
+                        }`}
+                      >
+                        {location}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium text-on-surface mb-2">价格</div>
+                  <div className="flex flex-wrap gap-2">
+                    {filterOptions.priceRanges.map((range) => (
+                      <button
+                        key={range}
+                        onClick={() => setSelectedPrice(range)}
+                        className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                          selectedPrice === range
+                            ? 'bg-primary text-white'
+                            : 'bg-surface-variant text-on-surface-variant hover:bg-surface-variant/80'
+                        }`}
+                      >
+                        {range}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium text-on-surface mb-2">排序</div>
+                  <div className="flex flex-wrap gap-2">
+                    {filterOptions.sortOptions.map((sort) => (
+                      <button
+                        key={sort}
+                        onClick={() => setSelectedSort(sort)}
+                        className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                          selectedSort === sort
+                            ? 'bg-primary text-white'
+                            : 'bg-surface-variant text-on-surface-variant hover:bg-surface-variant/80'
+                        }`}
+                      >
+                        {sort}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      setSelectedType('全部')
+                      setSelectedLocation('全部')
+                      setSelectedPrice('全部')
+                      setSelectedSort('匹配度')
+                    }}
+                    className="flex-1 py-2.5 bg-surface-variant text-on-surface rounded-lg font-medium hover:bg-surface-variant/80 transition-colors"
+                  >
+                    重置
+                  </button>
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="flex-1 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-variant transition-colors"
+                  >
+                    应用筛选
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 场牌结果 */}
+            {mockSearchResults.brands.length > 0 && (selectedType === '全部' || selectedType === '场牌') && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPin size={20} className="text-blue-500" />
+                  <h3 className="font-bold text-on-surface">场牌</h3>
+                  <span className="text-sm text-on-surface-variant">({mockSearchResults.brands.length})</span>
+                </div>
+                <div className="space-y-3">
+                  {mockSearchResults.brands.map((brand) => (
+                    <div
+                      key={brand.id}
+                      className="bg-surface rounded-xl border border-surface-variant p-3 hover:border-primary/50 transition-colors cursor-pointer"
+                      onClick={() => router.push(`/explore/brand/${brand.id}`)}
+                    >
+                      <div className="flex gap-3">
+                        <div className={`w-16 h-16 bg-gradient-to-br ${brand.imageColor} rounded-lg`} />
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-bold text-on-surface">{brand.name}</h4>
+                            <div className="flex items-center bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full font-bold">
+                              {brand.matchScore}%
+                            </div>
+                          </div>
+                          <p className="text-xs text-on-surface-variant line-clamp-1 mb-2">{brand.slogan}</p>
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {brand.tags.map((tag, idx) => (
+                              <span key={idx} className="text-xs px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-full">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-on-surface-variant">
+                            <div className="flex items-center">
+                              <MapPin size={12} className="mr-1" />
+                              {brand.location}
+                            </div>
+                            <div className="flex items-center">
+                              <ChevronRight size={12} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 商品结果 */}
+            {mockSearchResults.products.length > 0 && (selectedType === '全部' || selectedType === '商品') && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShoppingBag size={20} className="text-green-500" />
+                  <h3 className="font-bold text-on-surface">商品</h3>
+                  <span className="text-sm text-on-surface-variant">({mockSearchResults.products.length})</span>
+                </div>
+                <div className="space-y-3">
+                  {mockSearchResults.products.map((product) => (
+                    <div
+                      key={product.id}
+                      className="bg-surface rounded-xl border border-surface-variant p-3 hover:border-primary/50 transition-colors cursor-pointer"
+                      onClick={() => router.push(`/shop/product/${product.id}`)}
+                    >
+                      <div className="flex gap-3">
+                        <div className={`w-16 h-16 bg-gradient-to-br ${product.imageColor} rounded-lg`} />
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-bold text-on-surface">{product.name}</h4>
+                            <div className="flex items-center bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full font-bold">
+                              {product.matchScore}%
+                            </div>
+                          </div>
+                          <p className="text-xs text-on-surface-variant line-clamp-1 mb-2">{product.description}</p>
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {product.tags.map((tag, idx) => (
+                              <span key={idx} className="text-xs px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-full">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-lg font-bold text-primary">¥{product.price}</span>
+                              {product.originalPrice > product.price && (
+                                <span className="text-sm text-on-surface-variant line-through ml-2">
+                                  ¥{product.originalPrice}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center">
+                              <ChevronRight size={12} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 课程结果 */}
+            {mockSearchResults.courses.length > 0 && (selectedType === '全部' || selectedType === '课程') && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Star size={20} className="text-yellow-500" />
+                  <h3 className="font-bold text-on-surface">课程</h3>
+                  <span className="text-sm text-on-surface-variant">({mockSearchResults.courses.length})</span>
+                </div>
+                <div className="space-y-3">
+                  {mockSearchResults.courses.map((course) => (
+                    <div
+                      key={course.id}
+                      className="bg-surface rounded-xl border border-surface-variant p-3 hover:border-primary/50 transition-colors cursor-pointer"
+                      onClick={() => router.push(`/course/${course.id}`)}
+                    >
+                      <div className="flex gap-3">
+                        <div className={`w-16 h-16 bg-gradient-to-br ${course.imageColor} rounded-lg`} />
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-bold text-on-surface">{course.name}</h4>
+                            <div className="flex items-center bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full font-bold">
+                              {course.matchScore}%
+                            </div>
+                          </div>
+                          <p className="text-xs text-on-surface-variant line-clamp-1 mb-2">{course.description}</p>
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {course.tags.map((tag, idx) => (
+                              <span key={idx} className="text-xs px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-full">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-lg font-bold text-primary">¥{course.price}</span>
+                              <span className="text-xs text-on-surface-variant ml-2">· {course.duration}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <ChevronRight size={12} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 活动结果 */}
+            {mockSearchResults.events.length > 0 && (selectedType === '全部' || selectedType === '活动') && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar size={20} className="text-orange-500" />
+                  <h3 className="font-bold text-on-surface">活动</h3>
+                  <span className="text-sm text-on-surface-variant">({mockSearchResults.events.length})</span>
+                </div>
+                <div className="space-y-3">
+                  {mockSearchResults.events.map((event) => (
+                    <div
+                      key={event.id}
+                      className="bg-surface rounded-xl border border-surface-variant p-3 hover:border-primary/50 transition-colors cursor-pointer"
+                      onClick={() => router.push(`/event/${event.id}`)}
+                    >
+                      <div className="flex gap-3">
+                        <div className={`w-16 h-16 bg-gradient-to-br ${event.imageColor} rounded-lg`} />
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-bold text-on-surface">{event.name}</h4>
+                            <div className="flex items-center bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full font-bold">
+                              {event.matchScore}%
+                            </div>
+                          </div>
+                          <p className="text-xs text-on-surface-variant line-clamp-1 mb-2">{event.description}</p>
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {event.tags.map((tag, idx) => (
+                              <span key={idx} className="text-xs px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-full">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-on-surface-variant">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center">
+                                <Calendar size={12} className="mr-1" />
+                                {event.date}
+                              </div>
+                              <div className="flex items-center">
+                                <Users size={12} className="mr-1" />
+                                {event.participants}人参加
+                              </div>
+                            </div>
+                            <div className="flex items-center">
+                              <ChevronRight size={12} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 没有结果 */}
+            {getResultCount() === 0 && (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-4">🔍</div>
+                <h3 className="text-lg font-bold text-on-surface mb-2">未找到相关结果</h3>
+                <p className="text-on-surface-variant mb-6">
+                  尝试不同的关键词或筛选条件
+                </p>
+                <button
+                  onClick={() => {
+                    setSearchQuery('')
+                    setShowResults(false)
+                  }}
+                  className="px-6 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-variant transition-colors"
+                >
+                  重新搜索
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 搜索前界面 */}
+        {!showResults && !isSearching && (
+          <div className="px-4 py-6">
+            {/* 搜索建议 */}
+            {searchQuery && (
+              <div className="mb-8">
+                <h3 className="font-bold text-on-surface mb-3">搜索建议</h3>
+                <div className="flex flex-wrap gap-2">
+                  {searchSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion.id}
+                      onClick={() => handleQuickSearch(suggestion.text)}
+                      className="px-3 py-2 bg-surface-variant text-on-surface rounded-lg text-sm hover:bg-surface-variant/80 transition-colors"
+                    >
+                      {suggestion.text}
+                      <span className="text-xs text-on-surface-variant ml-1">({suggestion.category})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 搜索历史 */}
+            {searchHistory.length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-on-surface">搜索历史</h3>
+                  <button
+                    onClick={clearHistory}
+                    className="text-sm text-on-surface-variant hover:text-on-surface"
+                  >
+                    清除历史
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {searchHistory.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleQuickSearch(item.text)}
+                      className="w-full flex items-center justify-between p-3 hover:bg-surface-variant rounded-xl transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Clock size={16} className="text-on-surface-variant" />
+                        <div className="text-left">
+                          <div className="font-medium text-on-surface">{item.text}</div>
+                          <div className="text-xs text-on-surface-variant">{item.time}</div>
+                        </div>
+                      </div>
+                      <div className="text-xs px-2 py-1 bg-surface-variant text-on-surface-variant rounded-full">
+                        {item.type}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 热门搜索 */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-on-surface">热门搜索</h3>
+                <TrendingUp size={16} className="text-on-surface-variant" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {popularSearches.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleQuickSearch(item.text)}
+                    className="flex items-center gap-1 px-3 py-2 bg-surface-variant text-on-surface rounded-lg text-sm hover:bg-surface-variant/80 transition-colors"
+                  >
+                    {item.text}
+                    <span className="text-xs text-on-surface-variant">({item.count})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 搜索分类 */}
+            <div className="mb-8">
+              <h3 className="font-bold text-on-surface mb-3">按分类搜索</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { icon: MapPin, label: '场牌', color: 'from-blue-400 to-blue-600' },
+                  { icon: ShoppingBag, label: '商品', color: 'from-green-400 to-green-600' },
+                  { icon: Star, label: '课程', color: 'from-yellow-400 to-yellow-600' },
+                  { icon: Calendar, label: '活动', color: 'from-orange-400 to-orange-600' },
+                ].map((category, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleQuickSearch(category.label)}
+                    className="p-4 bg-surface rounded-xl border border-surface-variant hover:border-primary/50 transition-colors"
+                  >
+                    <div className={`w-12 h-12 bg-gradient-to-br ${category.color} rounded-lg flex items-center justify-center mb-2 mx-auto`}>
+                      <category.icon size={24} className="text-white" />
+                    </div>
+                    <div className="font-medium text-on-surface text-center">{category.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 搜索提示 */}
+            <div className="p-4 bg-surface-variant/30 rounded-xl">
+              <h4 className="font-medium text-on-surface mb-2">搜索提示</h4>
+              <ul className="text-sm text-on-surface-variant space-y-1">
+                <li>• 使用具体关键词查找更精准结果</li>
+                <li>• 尝试使用场牌名称、商品名称、课程类型</li>
+                <li>• 可以按位置、价格、类型进行筛选</li>
+                <li>• 使用语音搜索功能更方便（点击底部AI按钮）</li>
+              </ul>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}

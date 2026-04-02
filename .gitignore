@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.next/
+dist/
+build/
+
+# Environment
+.env*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.backup
+*.bak
+*.old
+*.temp
+*.tmp
+
+# Project-specific
+archive/
+backup/
+

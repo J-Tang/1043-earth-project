@@ -1,0 +1,230 @@
+'use client'
+
+import { useState } from 'react'
+import BottomNav from '@/components/BottomNav'
+import { Search, Filter, ShoppingCart, Star, Plus, Minus } from 'lucide-react'
+
+const categories = ['全部', '能量产品', '疗愈工具', '书籍课程', '灵性饰品', '定制服务']
+const products = [
+  {
+    id: 1,
+    name: '能量水晶套装',
+    category: '能量产品',
+    price: 299,
+    originalPrice: 399,
+    rating: 4.8,
+    sales: 1234,
+    imageColor: 'from-purple-400 to-purple-600',
+  },
+  {
+    id: 2,
+    name: '冥想坐垫',
+    category: '疗愈工具',
+    price: 189,
+    originalPrice: 249,
+    rating: 4.9,
+    sales: 856,
+    imageColor: 'from-blue-400 to-blue-600',
+  },
+]
+
+export default function ShopPage() {
+  const [selectedCategory, setSelectedCategory] = useState('全部')
+  const [cartItems, setCartItems] = useState<Record<number, number>>({})
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredProducts = products.filter(product => {
+    if (selectedCategory !== '全部' && product.category !== selectedCategory) return false
+    if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
+    return true
+  })
+
+  const addToCart = (productId: number) => {
+    setCartItems(prev => ({
+      ...prev,
+      [productId]: (prev[productId] || 0) + 1
+    }))
+  }
+
+  const updateQuantity = (productId: number, delta: number) => {
+    setCartItems(prev => {
+      const current = prev[productId] || 0
+      const newQuantity = Math.max(0, current + delta)
+      if (newQuantity === 0) {
+        const { [productId]: _, ...rest } = prev
+        return rest
+      }
+      return { ...prev, [productId]: newQuantity }
+    })
+  }
+
+  const cartCount = Object.values(cartItems).reduce((sum, qty) => sum + qty, 0)
+  const totalAmount = Object.entries(cartItems).reduce((sum, [id, qty]) => {
+    const product = products.find(p => p.id === Number(id))
+    return sum + (product?.price || 0) * qty
+  }, 0)
+
+  return (
+    <div className="min-h-screen">
+      <main className="content-area">
+        {/* 顶部搜索栏 */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-on-surface-variant" size={20} />
+              <input
+                type="text"
+                placeholder="搜索能量产品、疗愈工具..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-surface border border-surface-variant rounded-xl text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary"
+              />
+            </div>
+            <button className="p-3 bg-surface border border-surface-variant rounded-xl hover:bg-surface-variant transition-colors">
+              <Filter size={20} className="text-on-surface" />
+            </button>
+          </div>
+
+          {/* 购物车按钮 */}
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-on-surface">能量商城</h1>
+            <div className="relative">
+              <button className="p-3 bg-primary text-white rounded-xl hover:bg-primary-variant transition-colors flex items-center gap-2">
+                <ShoppingCart size={20} />
+                购物车
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 分类筛选 */}
+        <div className="mb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+                  selectedCategory === category
+                    ? 'bg-primary text-white'
+                    : 'bg-surface-variant text-on-surface-variant hover:bg-surface-variant/80'
+                }`}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 商品网格 */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          {filteredProducts.map((product) => {
+            const quantity = cartItems[product.id] || 0
+            
+            return (
+              <div key={product.id} className="bg-surface border border-surface-variant rounded-xl overflow-hidden hover:border-primary/50 transition-colors">
+                <div className={`h-40 bg-gradient-to-br ${product.imageColor} relative`}>
+                  {product.originalPrice > product.price && (
+                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                      限时折扣
+                    </div>
+                  )}
+                </div>
+                <div className="p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-on-surface-variant bg-surface-variant px-2 py-1 rounded">
+                      {product.category}
+                    </span>
+                    <div className="flex items-center text-xs text-on-surface-variant">
+                      <Star size={12} className="text-yellow-500 mr-1" fill="#FFD700" />
+                      {product.rating}
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-on-surface mb-1 line-clamp-1">{product.name}</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <span className="text-lg font-bold text-primary">¥{product.price}</span>
+                      {product.originalPrice > product.price && (
+                        <span className="text-sm text-on-surface-variant line-through ml-2">
+                          ¥{product.originalPrice}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-on-surface-variant">已售{product.sales}</span>
+                  </div>
+                  
+                  {quantity === 0 ? (
+                    <button
+                      onClick={() => addToCart(product.id)}
+                      className="w-full py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-variant transition-colors"
+                    >
+                      加入购物车
+                    </button>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center bg-surface-variant rounded-lg">
+                        <button
+                          onClick={() => updateQuantity(product.id, -1)}
+                          className="p-2 hover:bg-surface-variant/80"
+                        >
+                          <Minus size={16} />
+                        </button>
+                        <span className="px-3 font-medium">{quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(product.id, 1)}
+                          className="p-2 hover:bg-surface-variant/80"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => updateQuantity(product.id, -quantity)}
+                        className="text-sm text-on-surface-variant hover:text-on-surface"
+                      >
+                        移除
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          )}
+        </div>
+
+        {/* 购物车摘要 */}
+        {cartCount > 0 && (
+          <div className="fixed bottom-24 left-4 right-4 bg-surface border border-primary/20 rounded-2xl p-4 shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <span className="font-medium text-on-surface">购物车</span>
+                <span className="text-sm text-on-surface-variant ml-2">{cartCount}件商品</span>
+              </div>
+              <span className="text-xl font-bold text-primary">¥{totalAmount}</span>
+            </div>
+            <button className="w-full py-3 bg-gradient-to-br from-primary to-primary-variant text-white rounded-xl font-bold hover:opacity-90 transition-opacity">
+              去结算
+            </button>
+          </div>
+        )}
+
+        {/* 商城说明 */}
+        <div className="mt-8 p-4 bg-surface-variant/30 rounded-xl">
+          <h4 className="font-medium text-on-surface mb-2">能量商城说明</h4>
+          <ul className="text-sm text-on-surface-variant space-y-1">
+            <li>• 所有产品均经过能量净化与祝福</li>
+            <li>• 支持7天无理由退货（能量产品除外）</li>
+            <li>• 订单满299元包邮</li>
+            <li>• 支付方式：微信支付、支付宝、能量积分</li>
+            <li>• 客服时间：9:00-21:00</li>
+          </ul>
+        </div>
+      </main>
+      <BottomNav activeTab="shop" />
+    </div>
+  )
+}

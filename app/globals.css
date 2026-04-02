@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Material Design 3 颜色变量 - 基于紫色调 */
+    --background: 255 251 255; /* #FFFBFF */
+    --on-background: 29 25 33; /* #1D1921 */
+    --surface: 255 251 255; /* #FFFBFF */
+    --on-surface: 29 25 33; /* #1D1921 */
+    --surface-variant: 231 224 236; /* #E7E0EC */
+    --on-surface-variant: 73 69 78; /* #49454E */
+    --primary: 103 80 164; /* #6750A4 */
+    --primary-variant: 89 70 144; /* #594690 */
+    --on-primary: 255 255 255; /* #FFFFFF */
+    --secondary: 98 91 113; /* #625B71 */
+    --on-secondary: 255 255 255; /* #FFFFFF */
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    margin: 0;
+  }
+}
+
+@layer components {
+  /* 底部导航栏 */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-surface border-t border-surface-variant py-3 flex justify-around z-50;
+  }
+
+  .nav-item {
+    @apply flex flex-col items-center no-underline text-on-surface-variant transition-all flex-1;
+  }
+
+  .nav-item.active {
+    @apply text-primary;
+  }
+
+  .nav-icon {
+    @apply text-2xl mb-1;
+  }
+
+  .nav-text {
+    @apply text-xs font-medium;
+  }
+
+  /* AI按钮特殊样式 */
+  .nav-ai-button .nav-icon {
+    @apply bg-gradient-to-br from-primary to-primary-variant text-on-primary w-12 h-12 rounded-full flex items-center justify-center text-2xl -mt-3;
+  }
+
+  /* 内容区域 */
+  .content-area {
+    @apply px-4 pb-20 pt-4;
+  }
+
+  /* 卡片样式 */
+  .card {
+    @apply bg-surface border border-surface-variant rounded-xl overflow-hidden mb-4;
+  }
+
+  .card-image {
+    @apply w-full h-48 bg-gradient-to-br from-surface-variant to-primary/10;
+  }
+
+  .card-content {
+    @apply p-4;
+  }
+
+  .card-title {
+    @apply text-base font-bold text-on-surface mb-1;
+  }
+
+  .card-description {
+    @apply text-sm text-on-surface-variant leading-relaxed;
+  }
+}

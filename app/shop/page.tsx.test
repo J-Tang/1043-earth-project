@@ -1,0 +1,13 @@
+"use client"
+
+import BottomNav from "@/components/BottomNav"
+
+export default function ShopPage() {
+  return (
+    <div>
+      <h1>商城测试页面</h1>
+      <p>这是一个测试页面</p>
+      <BottomNav />
+    </div>
+  )
+}

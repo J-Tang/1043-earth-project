@@ -1,0 +1,366 @@
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import BottomNav from '@/components/BottomNav'
+import { Mic, MicOff, Search, Loader2, Star, MapPin, Calendar, ShoppingBag } from 'lucide-react'
+
+// 搜索结果数据
+const searchResults = [
+  {
+    id: 1,
+    type: 'field_brand',
+    name: '行星能量中心',
+    description: '连接地球能量网格的顶级疗愈场',
+    matchRate: 92,
+    matchReason: '您提到需要集体能量疗愈，该场牌专门提供大型团体疗愈服务',
+    imageColor: 'from-purple-400 to-purple-600',
+    attributes: ['冥想', '能量', '集体']
+  },
+  {
+    id: 2,
+    type: 'product',
+    name: '能量水晶套装',
+    description: '精选天然水晶，经过能量净化',
+    matchRate: 87,
+    matchReason: '您提到需要能量工具，这是最受欢迎的能量产品之一',
+    imageColor: 'from-blue-400 to-blue-600',
+    attributes: ['商品', '水晶', '能量']
+  },
+  {
+    id: 3,
+    type: 'course',
+    name: '觉醒之路工作坊',
+    description: '7天内在觉醒课程，引导自我认知',
+    matchRate: 85,
+    matchReason: '您提到想要个人成长课程，这个工作坊评分最高',
+    imageColor: 'from-green-400 to-green-600',
+    attributes: ['课程', '觉醒', '7天']
+  },
+  {
+    id: 4,
+    type: 'event',
+    name: '满月疗愈仪式',
+    description: '满月能量的集体疗愈与净化活动',
+    matchRate: 79,
+    matchReason: '您提到本月想参加特别活动，这是本月的热门活动',
+    imageColor: 'from-orange-400 to-orange-600',
+    attributes: ['活动', '满月', '集体']
+  },
+  {
+    id: 5,
+    type: 'field_brand',
+    name: '心灵疗愈空间',
+    description: '专业心理咨询与能量疗愈结合',
+    matchRate: 76,
+    matchReason: '您提到需要一对一指导，该场牌提供个人化服务',
+    imageColor: 'from-pink-400 to-pink-600',
+    attributes: ['疗愈', '心灵', '一对一']
+  },
+  {
+    id: 6,
+    type: 'product',
+    name: '冥想坐垫',
+    description: '人体工学设计，帮助深度冥想',
+    matchRate: 72,
+    matchReason: '您提到需要舒适的冥想工具，这是销量最好的冥想坐垫',
+    imageColor: 'from-indigo-400 to-indigo-600',
+    attributes: ['商品', '冥想', '舒适']
+  },
+]
+
+export default function AIPage() {
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingText, setRecordingText] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const [showResults, setShowResults] = useState(false)
+  const [results, setResults] = useState(searchResults)
+  const [recordingTime, setRecordingTime] = useState(0)
+  
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const recordingRef = useRef(false)
+
+  // 模拟语音识别文本
+  const sampleTexts = [
+    '我想找一个集体能量疗愈的场牌',
+    '需要购买一些能量工具来辅助冥想',
+    '有没有适合初学者的觉醒课程',
+    '本月有什么特别的活动可以参加',
+    '想要一对一的心灵成长指导',
+    '需要舒适的冥想工具'
+  ]
+
+  const handleStartRecording = () => {
+    setIsRecording(true)
+    setRecordingText('')
+    setRecordingTime(0)
+    recordingRef.current = true
+    
+    // 模拟语音识别过程
+    let textIndex = 0
+    const randomText = sampleTexts[Math.floor(Math.random() * sampleTexts.length)]
+    
+    timerRef.current = setInterval(() => {
+      setRecordingTime(prev => prev + 1)
+      
+      // 模拟文字逐渐出现
+      if (textIndex < randomText.length && recordingRef.current) {
+        setRecordingText(randomText.substring(0, textIndex + 1))
+        textIndex++
+      }
+      
+      // 最长录音60秒
+      if (recordingTime >= 60) {
+        handleStopRecording()
+      }
+    }, 100)
+  }
+
+  const handleStopRecording = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+    
+    recordingRef.current = false
+    setIsRecording(false)
+    setIsSearching(true)
+    
+    // 模拟搜索过程
+    setTimeout(() => {
+      setIsSearching(false)
+      setShowResults(true)
+      // 随机打乱结果顺序，模拟不同查询的不同结果
+      setResults([...searchResults].sort(() => Math.random() - 0.5))
+    }, 2000)
+  }
+
+  const resetSearch = () => {
+    setIsRecording(false)
+    setIsSearching(false)
+    setShowResults(false)
+    setRecordingText('')
+    setRecordingTime(0)
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+  }
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'field_brand':
+        return <MapPin size={14} className="text-blue-500" />
+      case 'product':
+        return <ShoppingBag size={14} className="text-green-500" />
+      case 'course':
+        return <Star size={14} className="text-yellow-500" />
+      case 'event':
+        return <Calendar size={14} className="text-orange-500" />
+      default:
+        return <Star size={14} />
+    }
+  }
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'field_brand':
+        return '场牌'
+      case 'product':
+        return '商品'
+      case 'course':
+        return '课程'
+      case 'event':
+        return '活动'
+      default:
+        return '其他'
+    }
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+
+  return (
+    <div className="min-h-screen">
+      <main className="content-area">
+        {/* 提示文字 - 屏幕中间居上 */}
+        <div className="pt-8 px-4 text-center">
+          <div className="text-lg font-medium text-on-surface">
+            {isRecording ? '正在聆听...' : '摁住语音直接说出你的需求'}
+          </div>
+          {isRecording && recordingText && (
+            <div className="mt-4 p-3 bg-surface-variant/50 rounded-xl">
+              <div className="text-sm text-on-surface-variant mb-1">识别文字：</div>
+              <div className="text-on-surface font-medium">{recordingText}</div>
+              {recordingTime > 0 && (
+                <div className="text-xs text-on-surface-variant text-right mt-2">
+                  录音时长: {formatTime(recordingTime)}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 语音按钮 - 手机屏幕中下端 */}
+        <div className="absolute inset-0 flex items-end justify-center pb-32 pointer-events-none">
+          <div className="pointer-events-auto">
+            <button
+              onMouseDown={handleStartRecording}
+              onMouseUp={handleStopRecording}
+              onTouchStart={handleStartRecording}
+              onTouchEnd={handleStopRecording}
+              onMouseLeave={() => {
+                if (isRecording && !recordingRef.current) {
+                  handleStopRecording()
+                }
+              }}
+              disabled={isSearching}
+              className={`
+                w-20 h-20 rounded-full flex items-center justify-center
+                transition-all duration-300
+                ${isRecording 
+                  ? 'bg-red-500 scale-110 shadow-lg shadow-red-500/30' 
+                  : isSearching
+                  ? 'bg-primary/20'
+                  : 'bg-gradient-to-br from-primary to-primary-variant shadow-lg'
+                }
+                ${isSearching ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105'}
+              `}
+            >
+              {isSearching ? (
+                <Loader2 size={32} className="text-primary animate-spin" />
+              ) : isRecording ? (
+                <MicOff size={32} className="text-white" />
+              ) : (
+                <Mic size={32} className="text-white" />
+              )}
+            </button>
+            
+            <div className="text-center mt-4">
+              <div className="text-sm text-on-surface">
+                {isSearching ? '搜索中...' : isRecording ? '松开停止' : '按住说话'}
+              </div>
+              {isSearching && (
+                <div className="text-xs text-on-surface-variant mt-1">
+                  正在智能匹配最适合您的内容
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 搜索结果区 */}
+        {showResults && (
+          <div className="px-4 pt-64">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-on-surface">匹配结果</h2>
+              <button
+                onClick={resetSearch}
+                className="text-sm text-primary hover:underline"
+              >
+                重新搜索
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {results.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-surface border border-surface-variant rounded-xl overflow-hidden hover:border-primary/50 transition-colors cursor-pointer"
+                  onClick={() => console.log('查看详情:', item.id)}
+                >
+                  {/* 图片区域 */}
+                  <div className={`h-24 bg-gradient-to-br ${item.imageColor} relative`}>
+                    <div className="absolute top-2 right-2 bg-black/30 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center">
+                      {getTypeIcon(item.type)}
+                    </div>
+                  </div>
+                  
+                  <div className="p-2">
+                    {/* 名称和属性 */}
+                    <div className="flex items-start justify-between mb-1">
+                      <h3 className="text-sm font-bold text-on-surface line-clamp-1">{item.name}</h3>
+                      <div className="flex items-center bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full font-bold">
+                        {item.matchRate}%
+                      </div>
+                    </div>
+                    
+                    {/* 类型标签 */}
+                    <div className="flex items-center gap-1 mb-1">
+                      <span className="text-xs px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-full">
+                        {getTypeLabel(item.type)}
+                      </span>
+                      {item.attributes.slice(0, 2).map((attr, idx) => (
+                        <span key={idx} className="text-xs px-1.5 py-0.5 bg-surface-variant/50 text-on-surface-variant rounded-full">
+                          {attr}
+                        </span>
+                      ))}
+                    </div>
+                    
+                    {/* 匹配理由 */}
+                    <p className="text-xs text-on-surface-variant line-clamp-2">
+                      {item.matchReason}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 结果统计 */}
+            <div className="mt-4 text-center text-sm text-on-surface-variant">
+              找到 {results.length} 个相关结果
+            </div>
+
+            {/* 使用提示 */}
+            <div className="mt-6 p-3 bg-surface-variant/30 rounded-xl">
+              <h4 className="text-sm font-medium text-on-surface mb-1">AI匹配提示</h4>
+              <ul className="text-xs text-on-surface-variant space-y-1">
+                <li>• 尽量详细描述您的具体需求，匹配更精准</li>
+                <li>• 可以提及预算、时间、偏好等详细信息</li>
+                <li>• 点击卡片即可查看完整详情</li>
+                <li>• 每次搜索最多显示6个最佳匹配结果</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* 初始状态提示 */}
+        {!showResults && !isRecording && !isSearching && (
+          <div className="px-4 pt-64">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-surface-variant/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Search size={24} className="text-on-surface-variant" />
+              </div>
+              <h3 className="text-lg font-medium text-on-surface mb-2">语音智能匹配</h3>
+              <p className="text-sm text-on-surface-variant max-w-md mx-auto">
+                按住下方按钮说话，AI将为您智能匹配最相关的场牌、商品、课程和活动
+              </p>
+              
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="p-3 bg-surface-variant/30 rounded-xl">
+                  <div className="text-sm font-medium text-on-surface mb-1">可以说：</div>
+                  <ul className="text-xs text-on-surface-variant space-y-0.5">
+                    <li>• "想找冥想的地方"</li>
+                    <li>• "需要能量产品"</li>
+                    <li>• "本月有什么活动"</li>
+                  </ul>
+                </div>
+                <div className="p-3 bg-surface-variant/30 rounded-xl">
+                  <div className="text-sm font-medium text-on-surface mb-1">尽量详细：</div>
+                  <ul className="text-xs text-on-surface-variant space-y-0.5">
+                    <li>• 预算范围</li>
+                    <li>• 地理位置</li>
+                    <li>• 具体需求</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+      <BottomNav activeTab="ai" />
+    </div>
+  )
+}
